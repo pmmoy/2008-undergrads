@@ -1,0 +1,110 @@
+#imports pandas module and turns the .csv file into a dataframe
+import pandas as pd
+df = pd.read_csv('salaries_by_college_major.csv')
+
+
+
+#Finds the first 5 entries in the dataset
+df.head()
+
+
+#Finds the dimensions of the dataset which is 51 rows and 6 columns
+df.shape
+
+
+#finds which rows contain empty cells
+df.isna()
+
+
+#Finds the last 5 entries in the data set
+df.tail()
+
+
+#deletes the cells with no values
+clean_df = df.dropna()
+
+#Finds which college major earns the most
+clean_df.max()
+
+
+#Finds which college major earns the most on average
+
+clean_df['Starting Median Salary'].idxmax()
+
+#Locates the row under the "Undergraduate Major" column
+clean_df['Undergraduate Major'].loc[43]
+
+#Finds what college major has the highest mid-career salary
+clean_df['Mid-Career Median Salary'].idxmax()
+
+#locates the major with the row number
+clean_df['Undergraduate Major'].loc[8]
+
+#Finds which college major has the lowest starting salary and how much do graduates earn after university
+clean_df['Starting Median Salary'].min()
+
+#Finds which college major has the lowest mid-career salary and how much can people expect to earn with this degree
+clean_df['Starting Median Salary'].idxmin()
+
+#Locates the row with the lowest mid career salary
+clean_df['Undergraduate Major'].loc[49]
+
+#Finds the difference between the earnings of the 10th percentile and 90th percentile
+spread_col = clean_df['Mid-Career 90th Percentile Salary'] - clean_df['Mid-Career 10th Percentile Salary']
+
+
+#Adds the spread column with the spread col dataframe
+clean_df.insert(1,'Spread', spread_col)
+
+#finds the lowest spread of college majors
+low_risk = clean_df.sort_values('Spread')
+low_risk[['Undergraduate Major', 'Spread']].head()
+
+#Finds the highest potential of a salary in the 90th Percentile
+high_potential = clean_df.sort_values('Mid-Career 90th Percentile Salary', ascending=False)
+high_potential[['Undergraduate Major', 'Mid-Career 90th Percentile Salary']].head()
+
+#Finds the Majors with the greatest spread in salaries
+highest_spread = clean_df.sort_values('Spread', ascending= False)
+highest_spread[['Undergraduate Major', 'Spread']].head()
+
+#Summing and grouping categories
+clean_df.groupby('Group').count()
+
+#Finds the mean of the Groups
+clean_df.groupby('Group').mean()
+
+# information from payscale about new salaries
+from bs4 import BeautifulSoup
+import requests
+
+response = requests.get("https://www.payscale.com/college-salary-report/majors-that-pay-you-back/bachelors")
+web_page = response.text
+soup = BeautifulSoup(web_page, "html.parser")
+data = soup.find_all(name = 'tr',class_='data-table__row')
+
+
+payscale = []
+for scale in data:
+        rank = scale.select_one(".csr-col--rank .data-table__value").text
+        major = scale.select_one(".csr-col--school-name .data-table__value").text
+        degree_type = scale.select_one(".csr-col--school-type .data-table__value").text
+        amount = scale.select(".csr-col--right .data-table__value")
+        early_career_pay = amount[0].text
+        mid_career_pay = amount[1].text
+        high_meaning = amount[2].text
+        
+        scale_info = {
+            'Rank': rank,
+            'Major': major,
+            'Degree Type': degree_type,
+            'Early Career Pay': early_career_pay,
+            'Mid-Career Pay': mid_career_pay,
+            '% High Meaning': high_meaning
+        }
+        payscale.append(scale_info)
+        
+    
+ 
+df = pd.DataFrame(payscale)
+print(df.head())
